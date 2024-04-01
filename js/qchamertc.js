@@ -6,7 +6,8 @@ var localStream, _fileChannel, chatEnabled, context, source,
     receiveBuffer = [],
     receivedSize = 0,
     file,
-    bytesPrev = 0;
+    bytesPrev = 0,
+    user='marcelofabio01@yahoo.com.ar';
  
 function errHandler(err) {
     console.log(err);
@@ -73,12 +74,13 @@ pc.onconnection = function(e) {
     console.log('onconnection ', e);
 }
 
-remoteOfferGot.onclick = function() {
+remoteTelefonoOfferWait.onclick = function() {
+    remoteOffer.value = waitTelefonoAnswerNodeRed();
     var _remoteOffer = new RTCSessionDescription(JSON.parse(remoteOffer.value));
     console.log('remoteOffer \n', _remoteOffer);
     pc.setRemoteDescription(_remoteOffer).then(function() {
         console.log('setRemoteDescription ok');
-        if (_remoteOffer.type == "offer") {
+        if (_remoteOffer.type === "offer") {
             pc.createAnswer().then(function(description) {
                 console.log('createAnswer 200 ok \n', description);
                 pc.setLocalDescription(description).then(function() {}).catch(errHandler);
@@ -86,7 +88,33 @@ remoteOfferGot.onclick = function() {
         }
     }).catch(errHandler);
 }
-localOfferSet.onclick = function() {
+
+waitTelefonoOfferNodeRed = function() {
+    //create a post call to the node-red server with a json object containing the user and waiting for the answer 
+    return fetch('https://infotronico.com:1880/red/waitTelefonoOffer', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            user: user
+        })
+    })
+    .then(response => response.json()) // assuming server responds with json
+    .then(data => {
+        // handle the data from the server
+        console.log(data);
+    })
+    .catch(error => {
+        // handle any errors
+        console.error('Error:', error);
+    });
+};
+
+/////////////////////////////////////////////////////////////////////////////////
+//   INICIA PROCESO DE COMUNICACION DESDE EL CLIENTE PC
+/////////////////////////////////////////////////////////////////////////////////
+localRecibeOfferDeTelefono.onclick = function() {
     if (chatEnabled) {
         console.log('Canal del chat creado');
         _chatChannel = pc.createDataChannel('chatChannel');
@@ -104,7 +132,7 @@ localOfferSet.onclick = function() {
                 } else {
                     console.log('after GetherTimeout');
                     localOffer.value = JSON.stringify(pc.localDescription);
-                    //sendOfferNodeRed();
+                    waitTelefonoOfferNodeRed();
                 }
             }, 2000);
             console.log('setLocalDescription ok');
@@ -112,6 +140,28 @@ localOfferSet.onclick = function() {
         // For chat
     }).catch(errHandler);
 }
+
+waitTelefonoOfferNodeRed = function() {
+    //create a post call to the node-red server with a json object containing the user and waiting for the answer 
+    return fetch('https://infotronico.com:1880/red/waitTelefonoOffer', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            user: user
+        })
+    })
+    .then(response => response.json()) // assuming server responds with json
+    .then(data => {
+        // handle the data from the server
+        console.log(data);
+    })
+    .catch(error => {
+        // handle any errors
+        console.error('Error:', error);
+    });
+};
 
 sendOfferNodeRed= function(){
     //create a post call to the node-red server with a json object containing the user and the offer    
@@ -121,7 +171,7 @@ sendOfferNodeRed= function(){
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            user: 'marcelofabio01@yahoo.com.ar',
+            user: user,
             offer: pc.localDescription
         })
     })
@@ -129,12 +179,15 @@ sendOfferNodeRed= function(){
         .then(data => {
             // Handle the response from the server
             console.log(data);
+            waitAnswerNodeRed();
         })
         .catch(err => {
             // Handle any errors
             console.error(err);
         });
-}
+    }
+
+
 
 //File transfer
 fileTransfer.onchange = function(e) {

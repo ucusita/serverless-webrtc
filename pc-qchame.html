@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>webRTC Teléfono</title>
+	<title>webRTC Cliente Qchame</title>
 	<style type="text/css">
 		.sent{
 			color:blue;
 		}
 	</style>
 </head>
-<body>	
+<body style="background-color: burlywood;">	
 	Local Audio
 	<audio id="localAudio" autoplay></audio>
 	Remote Audio
@@ -30,10 +30,7 @@
 		<video width=250 id=local controls autoplay></video>
 		Local Video
 		<textarea rows="4" cols="50"  id=localOffer></textarea>
-		<button id=iniciaTelefonoOfferChat style="
-		height: 50px;
-		border-radius: 10px;
-		background-color: bisque;">Iniciar Chat (CreateOffer)</button>	
+		<button id=localRecibeOfferDeTelefono>Iniciar Chat (CreateOffer)</button>	
 	</p>	
 </div>
 <div>
@@ -41,7 +38,10 @@
 		<video width=250 id=remote controls autoplay></video>
 		Remote Video
 		<textarea id="remoteOffer" rows="4" cols="50" placeholder="Paste remote SDP"></textarea>
-		<button id=remoteOfferGot>Answer</button>
+		<button id=remoteTelefonoOfferWait style="
+		height: 50px;
+		border-radius: 10px;
+		background-color: rgb(54, 94, 202); color: aliceblue;">Espera Chat (Answer)</button>
 	</p>	
 </div>
 <div id="chat" style="overflow:scroll;"></div>
@@ -68,6 +68,6 @@
 		</p>
 	</div>
 </div>
-<script src="js/telefonortc.js"></script>
+<script src="js/qchamertc.js"></script>
 </body>
 </html>

@@ -2,6 +2,8 @@
 * He creado un fork en ucusita
 * He creado un nodo en node red para recibir el offer
 * He creado una rama Estado inicial funcionando Ok para preservar el modelo inicial de código
+* index.html es el código del "transmisor" destinado a estar en el teléfono
+* pc-qchame.html es el código del receptor destinado a enlazar a qchame
 
 ### Pendientes
 * Preservar el offer hasta que lo solicite el cliente de la comunicación
