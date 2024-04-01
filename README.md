@@ -1,3 +1,13 @@
+### MIS MODIFICACIONES
+* He creado un fork en ucusita
+* He creado un nodo en node red para recibir el offer
+* He creado una rama Estado inicial funcionando Ok para preservar el modelo inicial de código
+
+### Pendientes
+* Preservar el offer hasta que lo solicite el cliente de la comunicación
+* 
+
+
 ### Serverless-webrtc
 ---
 * Is it possible to create a p2p connection without a signalling server? 
