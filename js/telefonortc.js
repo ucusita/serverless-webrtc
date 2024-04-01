@@ -7,7 +7,8 @@ var localStream, _fileChannel, chatEnabled, context, source,
     receivedSize = 0,
     file,
     bytesPrev = 0,
-    user='marcelofabio01@yahoo.com.ar';
+    user='marcelofabio01@yahoo.com.ar',
+    remoteClienteAnswer={};
  
 function errHandler(err) {
     console.log(err);
@@ -74,19 +75,6 @@ pc.onconnection = function(e) {
     console.log('onconnection ', e);
 }
 
-remoteOfferGot.onclick = function() {
-    var _remoteOffer = new RTCSessionDescription(JSON.parse(remoteOffer.value));
-    console.log('remoteOffer \n', _remoteOffer);
-    pc.setRemoteDescription(_remoteOffer).then(function() {
-        console.log('setRemoteDescription ok');
-        if (_remoteOffer.type == "offer") {
-            pc.createAnswer().then(function(description) {
-                console.log('createAnswer 200 ok \n', description);
-                pc.setLocalDescription(description).then(function() {}).catch(errHandler);
-            }).catch(errHandler);
-        }
-    }).catch(errHandler);
-}
 /////////////////////////////////////////////////////////////////////////////////
 //   INICIA PROCESO DE COMUNICACION DESDE EL TELEFONO
 /////////////////////////////////////////////////////////////////////////////////
@@ -134,7 +122,7 @@ sendTelefonoOfferNodeRed= function(){
         .then(data => {
             // Handle the response from the server
             console.log(data);
-            waitClienteAnswerNodeRed();
+            esperaClienteAnswer();           ///ESPERA A QUE LA COPMPUTADORA SE CONECTE
         })
         .catch(err => {
             // Handle any errors
@@ -143,9 +131,47 @@ sendTelefonoOfferNodeRed= function(){
     }
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
-
+/////////////////////////////////////////////////////////////////////////////////
+//   ESPERA LA RESPUESTA DESDE LA COMPUTADORA
+/////////////////////////////////////////////////////////////////////////////////
 //create a post call to the node-red server with a json object containing the user and waiting for the answer 
-waitClienteAnswerNodeRed = function() {    
+esperaClienteAnswer = async function() {
+    /*     var _remoteOffer = new RTCSessionDescription(JSON.parse(remoteOffer.value));
+    console.log('remoteOffer \n', _remoteOffer);
+    pc.setRemoteDescription(_remoteOffer).then(function() {
+        console.log('setRemoteDescription ok');
+        if (_remoteOffer.type == "offer") {
+            pc.createAnswer().then(function(description) {
+                console.log('createAnswer 200 ok \n', description);
+                pc.setLocalDescription(description).then(function() {}).catch(errHandler);
+            }).catch(errHandler);
+        }
+    }).catch(errHandler); */
+    try {
+        remoteClienteAnswer = await waitClienteAnswerrNodeRed();
+        console.log('HA RECIBIDO ALGUNA RESPUESTA DE LA COMPUTADORA:')
+        console.log(remoteClienteAnswer);
+        var _remoteAnswer = new RTCSessionDescription(remoteClienteAnswer);
+        console.log(_remoteAnswer);
+        
+
+        await pc.setRemoteDescription(_remoteAnswer);
+        console.log('setRemoteDescription ok');
+        if (_remoteAnswer.type === "answer") {
+            var description = await pc.createAnswer();          /////// eerrrrorrrrr
+            console.log('createAnswer 200 ok \n', description);
+            await pc.setLocalDescription(description);
+            console.log('Respuesta RECIBIDA DE COMPUTADORA:');
+            console.log(JSON.stringify(pc.localDescription));
+        }
+        
+    } catch (error) {
+        errHandler(error);
+    }
+}
+
+waitClienteAnswerrNodeRed = async function() {
+    //create a post call to the node-red server with a json object containing the user and waiting for the answer 
     return fetch('https://infotronico.com:1880/red/waitClienteAnswer', {
         method: 'POST',
         headers: {
@@ -158,7 +184,8 @@ waitClienteAnswerNodeRed = function() {
     .then(response => response.json()) // assuming server responds with json
     .then(data => {
         // handle the data from the server
-        console.log(data);
+        console.log(data.offer);
+        return data.offer;
     })
     .catch(error => {
         // handle any errors
