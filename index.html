@@ -8,7 +8,11 @@
 		}
 	</style>
 </head>
-<body>
+<body>	
+	Local Audio
+	<audio id="localAudio" autoplay></audio>
+	Remote Audio
+	<audio id="remoteAudio" autoplay></audio>
 <div>
 	<input type="checkbox" id="enable_chat" onclick="enableChat()" checked> Enable chat
 	<span id=micused style="right:0;position:fixed;"></span>
@@ -24,7 +28,7 @@
 <div>
 	<p>
 		<video width=250 id=local controls autoplay></video>
-		Local
+		Local Video
 		<textarea rows="4" cols="50"  id=localOffer></textarea>
 		<button id=localOfferSet>CreateOffer</button>	
 	</p>	
@@ -32,7 +36,7 @@
 <div>
 	<p>
 		<video width=250 id=remote controls autoplay></video>
-		Remote
+		Remote Video
 		<textarea id="remoteOffer" rows="4" cols="50" placeholder="Paste remote SDP"></textarea>
 		<button id=remoteOfferGot>Answer</button>
 	</p>	

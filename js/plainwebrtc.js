@@ -7,7 +7,7 @@ var localStream, _fileChannel, chatEnabled, context, source,
     receivedSize = 0,
     file,
     bytesPrev = 0;
-
+ 
 function errHandler(err) {
     console.log(err);
 }
@@ -18,7 +18,7 @@ function enableChat() {
 enableChat();
 
 
-navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then(stream => {
+navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream => {
     localStream = stream;
     //Display the mircophone being used
     micused.innerHTML = localStream.getAudioTracks()[0].label;
@@ -88,6 +88,7 @@ remoteOfferGot.onclick = function() {
 }
 localOfferSet.onclick = function() {
     if (chatEnabled) {
+        console.log('Canal del chat creado');
         _chatChannel = pc.createDataChannel('chatChannel');
         _fileChannel = pc.createDataChannel('fileChannel');
         // _fileChannel.binaryType = 'arraybuffer';
@@ -103,12 +104,36 @@ localOfferSet.onclick = function() {
                 } else {
                     console.log('after GetherTimeout');
                     localOffer.value = JSON.stringify(pc.localDescription);
+                    //sendOfferNodeRed();
                 }
             }, 2000);
             console.log('setLocalDescription ok');
         }).catch(errHandler);
         // For chat
     }).catch(errHandler);
+}
+
+sendOfferNodeRed= function(){
+    //create a post call to the node-red server with a json object containing the user and the offer    
+    fetch('https://infotronico.com:1880/red/createOffer', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            user: 'marcelofabio01@yahoo.com.ar',
+            offer: pc.localDescription
+        })
+    })
+        .then(response => response.json())
+        .then(data => {
+            // Handle the response from the server
+            console.log(data);
+        })
+        .catch(err => {
+            // Handle any errors
+            console.error(err);
+        });
 }
 
 //File transfer
@@ -305,22 +330,22 @@ var audioRTC = function(cb) {
     }
 }
 
-/* Summary
+//Summary
     //setup your video
-    pc = new RTCPeerConnection
-    navigator.mediaDevices.getUserMedia({ audio: true, video: true })
-    pc.addStream(stream)
+    //pc = new RTCPeerConnection
+    //navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+    //pc.addStream(stream)
+    //Asocia el mic al navegador
 
     //prepare your sdp1
-    pc.createOffer() - des
-    pc.setLocalDescription(des)
-    pc.onicecandidate
-    pc.localDescription
+    //pc.createOffer() - des
+    //pc.setLocalDescription(des)
+    //pc.onicecandidate
+    //pc.localDescription
     
     //create sdp from sdp1
-    _remoteOffer = new RTCSessionDescription sdp
-    pc.setRemoteDescription(_remoteOffer)
-    _remoteOffer.type == "offer" && pc.createAnswer() - desc
-    pc.setLocalDescription(description)
-    pc.onaddstream
-*/
+    //_remoteOffer = new RTCSessionDescription(sdp)
+    //pc.setRemoteDescription(_remoteOffer)
+    //_remoteOffer.type == "offer" && pc.createAnswer() - desc
+    //pc.setLocalDescription(description)
+    //pc.onaddstream
