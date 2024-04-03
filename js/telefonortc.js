@@ -1,4 +1,19 @@
-var conf = { iceServers: [{"urls":"stun:stun.l.google.com:19302"}] };
+var conf1 = { iceServers: [{"urls":"stun:stun.l.google.com:19302"},
+        {"urls":"stun:stun.services.mozilla.com"},
+        {"urls":"stun:numb.viagenie.ca"}
+    ] };
+var conf2 = { iceServers: [{urls: [ "stun:sp-turn1.xirsys.com" ]}, 
+            { username: "dILYbjkOpfm3DlAbVoBknCuRTw3UQswX_LR5fC89xyZS-QY4oI9mYzWdPLaRYSmhAAAAAGYLeTZ1Y3VzaXRh",
+              credential: "cabbb9f8-f09f-11ee-83a9-0242ac120004",
+              urls: ["turn:sp-turn1.xirsys.com:80?transport=udp",
+              /* "turn:sp-turn1.xirsys.com:3478?transport=udp",
+              "turn:sp-turn1.xirsys.com:80?transport=tcp",
+              "turn:sp-turn1.xirsys.com:3478?transport=tcp",
+              "turns:sp-turn1.xirsys.com:443?transport=tcp", */
+              "turns:sp-turn1.xirsys.com:5349?transport=tcp"]}]   
+            };
+var conf = { iceServers: [ {"urls":"stun:stun.l.google.com:19302"}, { username: "ucusita", credential: 'cachiporri', url: "turn:207.244.251.59:3478"}    ]};
+
 var pc = new RTCPeerConnection(conf);
 var localStream, _fileChannel, chatEnabled, context, source,
     _chatChannel, sendFileDom = {},
@@ -80,6 +95,7 @@ pc.onconnection = function(e) {
 /////////////////////////////////////////////////////////////////////////////////
 //Otiene el Id del teléfono y envía al servidor NodeRed offer
 iniciaTelefonoOfferChat.onclick = function() {
+    console.log('---- iniciaTelefonoOfferChat ----');
     if (chatEnabled) {
         console.log('Canal del chat creado');
         _chatChannel = pc.createDataChannel('chatChannel');
@@ -92,7 +108,7 @@ iniciaTelefonoOfferChat.onclick = function() {
         console.log('createOffer ok ');
         pc.setLocalDescription(des).then(() => {
             setTimeout(function() {
-                if (pc.iceGatheringState == "complete") {
+                if (pc.iceGatheringState === "complete") {
                     return;
                 } else {
                     console.log('after GetherTimeout');
@@ -107,7 +123,8 @@ iniciaTelefonoOfferChat.onclick = function() {
     }
 
 //create a post call to the node-red server with a json object containing the user and the offer    
-sendTelefonoOfferNodeRed= function(){    
+sendTelefonoOfferNodeRed= function(){   
+    console.log('---- sendTelefonoOfferNodeRed ----');
     fetch('https://infotronico.com:1880/red/createTelefonoOffer', {
         method: 'POST',
         headers: {
@@ -122,31 +139,25 @@ sendTelefonoOfferNodeRed= function(){
         .then(data => {
             // Handle the response from the server
             console.log(data);
-            esperaClienteAnswer();           ///ESPERA A QUE LA COPMPUTADORA SE CONECTE
+            //esperaClienteAnswer();           ///ESPERA A QUE LA COPMPUTADORA SE CONECTE
         })
         .catch(err => {
             // Handle any errors
             console.error(err);
         });
     }
-/////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////
+
 /////////////////////////////////////////////////////////////////////////////////
 //   ESPERA LA RESPUESTA DESDE LA COMPUTADORA
 /////////////////////////////////////////////////////////////////////////////////
+btnRespuestaComputadora.onclick = function() {
+    console.log('---- btnRespuestaComputadora ----');
+    esperaClienteAnswer();
+}
+
 //create a post call to the node-red server with a json object containing the user and waiting for the answer 
 esperaClienteAnswer = async function() {
-    /*     var _remoteOffer = new RTCSessionDescription(JSON.parse(remoteOffer.value));
-    console.log('remoteOffer \n', _remoteOffer);
-    pc.setRemoteDescription(_remoteOffer).then(function() {
-        console.log('setRemoteDescription ok');
-        if (_remoteOffer.type == "offer") {
-            pc.createAnswer().then(function(description) {
-                console.log('createAnswer 200 ok \n', description);
-                pc.setLocalDescription(description).then(function() {}).catch(errHandler);
-            }).catch(errHandler);
-        }
-    }).catch(errHandler); */
+    console.log('---- esperaClienteAnswer ----');    
     try {
         remoteClienteAnswer = await waitClienteAnswerrNodeRed();
         console.log('HA RECIBIDO ALGUNA RESPUESTA DE LA COMPUTADORA:')
@@ -157,13 +168,14 @@ esperaClienteAnswer = async function() {
 
         await pc.setRemoteDescription(_remoteAnswer);
         console.log('setRemoteDescription ok');
-        if (_remoteAnswer.type === "answer") {
+        if (_remoteAnswer.type === "offer") {
             var description = await pc.createAnswer();          /////// eerrrrorrrrr
             console.log('createAnswer 200 ok \n', description);
             await pc.setLocalDescription(description);
             console.log('Respuesta RECIBIDA DE COMPUTADORA:');
-            console.log(JSON.stringify(pc.localDescription));
+            console.log(JSON.stringify(pc.localDescription));            
         }
+        remoteOffer.value = JSON.stringify(pc.localDescription);
         
     } catch (error) {
         errHandler(error);
@@ -171,6 +183,7 @@ esperaClienteAnswer = async function() {
 }
 
 waitClienteAnswerrNodeRed = async function() {
+    console.log('---- waitClienteAnswerrNodeRed ----');
     //create a post call to the node-red server with a json object containing the user and waiting for the answer 
     return fetch('https://infotronico.com:1880/red/waitClienteAnswer', {
         method: 'POST',
@@ -192,7 +205,6 @@ waitClienteAnswerrNodeRed = async function() {
         console.error('Error:', error);
     });
 };
-
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
 

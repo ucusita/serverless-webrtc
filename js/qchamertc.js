@@ -1,4 +1,19 @@
-var conf = { iceServers: [{"urls":"stun:stun.l.google.com:19302"}] };
+var conf1 = { iceServers: [{"urls":"stun:stun.l.google.com:19302"},
+        {"urls":"stun:stun.services.mozilla.com"},
+        {"urls":"stun:numb.viagenie.ca"}
+    ] };
+var conf2 = { iceServers: [{urls: [ "stun:sp-turn1.xirsys.com" ]}, 
+            { username: "dILYbjkOpfm3DlAbVoBknCuRTw3UQswX_LR5fC89xyZS-QY4oI9mYzWdPLaRYSmhAAAAAGYLeTZ1Y3VzaXRh",
+              credential: "cabbb9f8-f09f-11ee-83a9-0242ac120004",
+              urls: ["turn:sp-turn1.xirsys.com:80?transport=udp",
+              /* "turn:sp-turn1.xirsys.com:3478?transport=udp",
+              "turn:sp-turn1.xirsys.com:80?transport=tcp",
+              "turn:sp-turn1.xirsys.com:3478?transport=tcp",
+              "turns:sp-turn1.xirsys.com:443?transport=tcp", */
+              "turns:sp-turn1.xirsys.com:5349?transport=tcp"]}]   
+            };
+var conf = { iceServers: [ {"urls":"stun:stun.l.google.com:19302"}, { username: "ucusita", credential: 'cachiporri', url: "turn:207.244.251.59:3478"}    ]};
+
 var pc = new RTCPeerConnection(conf);
 var localStream, _fileChannel, chatEnabled, context, source,
     _chatChannel, sendFileDom = {},
@@ -31,6 +46,7 @@ navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(stream =
 
 function sendMsg() {
     var text = sendTxt.value;
+    console.log(text);
     chat.innerHTML = chat.innerHTML + "<pre class=sent>" + text + "</pre>";
     _chatChannel.send(text);
     sendTxt.value = "";
@@ -52,7 +68,8 @@ pc.ondatachannel = function(e) {
 pc.onicecandidate = function(e) {
     var cand = e.candidate;
     if (!cand) {
-        console.log('iceGatheringState complete\n', pc.localDescription.sdp);
+        console.log('iceGatheringState complete\n');
+        //console.log(pc.localDescription.sdp);
         localOffer.value = JSON.stringify(pc.localDescription);
     } else {
         console.log(cand.candidate);
@@ -79,9 +96,14 @@ pc.onconnection = function(e) {
 //   INICIA PROCESO DE COMUNICACION DESDE EL CLIENTE PC
 /////////////////////////////////////////////////////////////////////////////////
 remoteTelefonoOfferWait.onclick = async function() {
+    console.log('---- remoteTelefonoOfferWait ----');
     try {
+        // Espera la oferta del teléfono
         remoteTelefonoOffer = await waitTelefonoOfferNodeRed();
         console.log(remoteTelefonoOffer);
+        /// Luego borrar esta linea - solo para pruebas
+        remoteOffer.value = JSON.stringify(remoteTelefonoOffer);
+
         var _remoteOffer = new RTCSessionDescription(remoteTelefonoOffer);
         console.log(_remoteOffer);
         
@@ -94,7 +116,11 @@ remoteTelefonoOfferWait.onclick = async function() {
                 await pc.setLocalDescription(description);
                 console.log('Respuesta lista para enviar a teléfono:');
                 console.log(JSON.stringify(pc.localDescription));
+                localOffer.value = JSON.stringify(pc.localDescription);
+                //////////////////////////////////////
+                //// Enviar respuesta al teléfono ////
                 sendClientAnswerNodeRed();
+                //////////////////////////////////////
             }
         
     } catch (error) {
@@ -103,6 +129,7 @@ remoteTelefonoOfferWait.onclick = async function() {
 }
 
 waitTelefonoOfferNodeRed = async function() {
+    console.log('---- waitTelefonoOfferNodeRed ----');
     //create a post call to the node-red server with a json object containing the user and waiting for the answer 
     return fetch('https://infotronico.com:1880/red/waitTelefonoOffer', {
         method: 'POST',
@@ -126,9 +153,9 @@ waitTelefonoOfferNodeRed = async function() {
 };
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
-
+//create a post call to the node-red server with a json object containing the user and the offer
 sendClientAnswerNodeRed= function(){
-    //create a post call to the node-red server with a json object containing the user and the offer    
+    console.log('---- sendClientAnswerNodeRed ----');        
     fetch('https://infotronico.com:1880/red/createClienteAnswer', {
         method: 'POST',
         headers: {
@@ -143,43 +170,20 @@ sendClientAnswerNodeRed= function(){
         .then(data => {
             // Handle the response from the server
             console.log(data);
-            //waitAnswerNodeRed();          //// aqui tendría resuelta la conexión
+            console.log('---------  CONEXION ESTABLECIDA LADO COMPUTADORA  ---------');
+            ////////////////////////////////////////////
+            //// Aquí tendría resuelta la conexión
+            ////////////////////////////////////////////
+
         })
         .catch(err => {
             // Handle any errors
             console.error(err);
         });
     }
-
 /////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////////////
 
-/* localRecibeOfferDeTelefono.onclick = function() {
-    if (chatEnabled) {
-        console.log('Canal del chat creado');
-        _chatChannel = pc.createDataChannel('chatChannel');
-        _fileChannel = pc.createDataChannel('fileChannel');
-        // _fileChannel.binaryType = 'arraybuffer';
-        chatChannel(_chatChannel);
-        fileChannel(_fileChannel);
-    }
-    pc.createOffer().then(des => {
-        console.log('createOffer ok ');
-        pc.setLocalDescription(des).then(() => {
-            setTimeout(function() {
-                if (pc.iceGatheringState == "complete") {
-                    return;
-                } else {
-                    console.log('after GetherTimeout');
-                    localOffer.value = JSON.stringify(pc.localDescription);
-                }
-            }, 2000);
-            console.log('setLocalDescription ok');
-        }).catch(errHandler);
-        // For chat
-    }).catch(errHandler);
-}
- */
 
 //File transfer
 fileTransfer.onchange = function(e) {
